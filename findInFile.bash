@@ -1,8 +1,10 @@
 findInFile() {
-  # Function to be placed in bash profile
-  # Allows user to specify what contents of a file they are looking for
-  # in what file types and in what NOT file types
-  # Iterate over the number of scripts arugments
+    : <<_comment_
+        Function to be placed in bash profile
+        Allows user to specify what contents of a file they are looking for
+        in what file types and in what NOT file types
+        Iterate over the number of scripts arugments
+_comment_
   while [[ "$#" -gt 0 ]]
   do
     case $1 in
@@ -63,3 +65,37 @@ findInFile -et .py "random" # should return 0 results, works
 findInFile -et .R "random" # should return 2 results, works
 findInFile -et .R -ft .py "random" # should return 2 results, works
 findInFile -et .R,.C -ft .py,.java "random" # should return 2 results, works
+
+
+
+# This is the code that was submitted on Code Review
+# https://codereview.stackexchange.com/questions/210845/bash-function-to-find-contents-of-a-file-with-a-certain-extension?noredirect=1#comment407612_210845
+findInFile() {
+    :<<_comment_
+        Function to be placed in bash profile
+        Allows user to specify what contents of a file they are looking for
+        in what file types and in what NOT file types
+        Iterate over the number of scripts arugments
+_comment_
+    declare -a select
+    while [[ "$#" -gt 0 ]]
+    do
+        if [[ $1 =~ ^(-ft|--fileTypes|-et|--excludeTypes)$ ]]
+        then
+            local type="$2"
+            [[ "$type" == *,* ]] && type="{$type}"
+            if [[ $1 == *-f* ]]
+            then 
+                select+=( "--include=*$type" )
+            else
+                select+=( "--exclude=*$type" )
+            fi
+            shift 2
+        else
+            break
+        fi
+    done
+    set -x
+    grep -r ${select[@]} "$@" .
+    { set +x; } 2>/dev/null
+}
